@@ -28,6 +28,18 @@ router.post('/favorite', authMiddleware, async (req, res) => {
   }
 });
 
+//Buscar livros por título ou autor
+router.get('/books/search', async (req, res) => {
+  const { query } = req.query;
+  const books = await Book.find({
+    $or: [
+      { title: new RegExp(query, 'i') },
+      { author: new RegExp(query, 'i') }
+    ]
+  });
+  res.json(books);
+});
+
 // Listar todos os usuários
 router.get('/', async (req, res) => {
   try {

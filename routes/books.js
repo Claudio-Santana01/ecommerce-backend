@@ -94,6 +94,34 @@ router.post('/favorite', (req, res) => {
     });
 });
 
+
+// Atualizar informações de um livro
+router.put('/books/:id', async (req, res) => {
+  const { id } = req.params; // ID do livro a ser atualizado
+  const { title, author, genre, description, price, imageUrl } = req.body; // Novas informações
+
+  try {
+    // Encontrar o livro pelo ID e atualizar os campos fornecidos
+    const updatedBook = await Book.findByIdAndUpdate(
+      id,
+      { title, author, genre, description, price, imageUrl },
+      { new: true, runValidators: true } // Retorna o documento atualizado e valida os campos
+    );
+
+    if (!updatedBook) {
+      return res.status(404).json({ message: 'Livro não encontrado' });
+    }
+
+    res.json({ message: 'Livro atualizado com sucesso', book: updatedBook });
+  } catch (error) {
+    console.error('Erro ao atualizar o livro:', error);
+    res.status(500).json({ error: 'Erro no servidor ao atualizar o livro' });
+  }
+});
+
+module.exports = router;
+
+
 // Livros mais pesquisados
 router.get('/most-searched', async (req, res) => {
   try {
