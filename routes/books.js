@@ -73,6 +73,10 @@ router.put('/books/:id', async (req, res) => {
   const { id } = req.params;
   const { title, author, description, publishedYear, genre, user, image, publisher, price } = req.body;
 
+  console.log('ID do livro:', id);
+  console.log('Dados para atualização:', { title, author, description, publishedYear, genre, user, image, publisher, price });
+
+
   try {
     // Encontrar o livro pelo ID e atualizar os campos fornecidos
     const updatedBook = await Book.findByIdAndUpdate(
