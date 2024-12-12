@@ -31,7 +31,7 @@ dados do livro. */
 //Suporte para upload de arquivos
 const multer = require('multer');
 
-// Configuração do armazenamento
+// Configuração do armazenamento para o upload de imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/'); // Pasta onde as imagens serão salvas
@@ -43,13 +43,23 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Rota para adicionar um livro com imagem
+// Rota para listar todos os livros
+router.get('/books', async (req, res) => {
+  try {
+    const books = await Book.find();
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao listar livros', error });
+  }
+});
+
+// Rota para adicionar um novo livro com imagem
 router.post('/add', upload.single('image'), async (req, res) => {
-  const { title, author, description, publishedYear, genre, user } = req.body;
+  const { title, author, description, publishedYear, genre, user, publisher, price } = req.body;
   const image = req.file ? req.file.path : null;
 
   try {
-    const newBook = new Book({ title, author, description, publishedYear, genre, user, image });
+    const newBook = new Book({ title, author, description, publishedYear, genre, user, image, publisher, price });
     await newBook.save();
     res.json({ message: 'Livro adicionado com sucesso!', data: newBook });
   } catch (error) {
@@ -58,53 +68,16 @@ router.post('/add', upload.single('image'), async (req, res) => {
   }
 });
 
-// Rota para listar todos os livros
-router.get('/', (req, res) => {
-  // Usando o modelo Book para buscar todos os livros no banco de dados
-  Book.find()
-    .then((books) => {
-      res.status(200).json(books);
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Erro ao listar livros', error });
-    });
-});
-
-
-
-router.post('/favorite', (req, res) => {
-  const { bookId, userId } = req.body;
-
-  // Verificar se o livro existe
-  Book.findById(bookId)
-    .then((book) => {
-      if (!book) {
-        return res.status(404).json({ message: 'Livro não encontrado' });
-      }
-
-      // Adicionar o usuário aos favoritos do livro
-      book.favorites.push(userId);
-      return book.save();
-    })
-    .then((updatedBook) => {
-      res.status(200).json({ message: 'Livro favoritado com sucesso!', book: updatedBook });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Erro ao favoritar livro', error });
-    });
-});
-
-
-// Atualizar informações de um livro
+// Rota para atualizar informações de um livro
 router.put('/books/:id', async (req, res) => {
-  const { id } = req.params; // ID do livro a ser atualizado
-  const { title, author, genre, description, price, imageUrl } = req.body; // Novas informações
+  const { id } = req.params;
+  const { title, author, description, publishedYear, genre, user, image, publisher, price } = req.body;
 
   try {
     // Encontrar o livro pelo ID e atualizar os campos fornecidos
     const updatedBook = await Book.findByIdAndUpdate(
       id,
-      { title, author, genre, description, price, imageUrl },
+      { title, author, description, publishedYear, genre, user, image, publisher, price },
       { new: true, runValidators: true } // Retorna o documento atualizado e valida os campos
     );
 
@@ -119,10 +92,25 @@ router.put('/books/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+// Rota para marcar um livro como favorito
+router.post('/favorite', async (req, res) => {
+  const { bookId, userId } = req.body;
 
+  try {
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ message: 'Livro não encontrado' });
+    }
 
-// Livros mais pesquisados
+    book.favorites.push(userId);
+    await book.save();
+    res.status(200).json({ message: 'Livro favoritado com sucesso!', book });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao favoritar livro', error });
+  }
+});
+
+// Rota para listar os livros mais visualizados
 router.get('/most-searched', async (req, res) => {
   try {
     // Verificando se existe algum livro
@@ -134,7 +122,7 @@ router.get('/most-searched', async (req, res) => {
     // Ordenando os livros pelas visualizações de forma decrescente
     const mostSearchedBooks = await Book.find()
       .sort({ views: -1 })
-      .limit(5); // Pegando os 5 livros mais visualizados
+      .limit(5); // Limita a 5 livros mais visualizados
     
     res.status(200).json(mostSearchedBooks);
   } catch (err) {
@@ -143,7 +131,7 @@ router.get('/most-searched', async (req, res) => {
   }
 });
 
-// Buscar um livro e incrementar visualizações
+// Rota para buscar um livro e incrementar visualizações
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
