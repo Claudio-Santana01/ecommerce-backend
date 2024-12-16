@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
+const { updateBookPrices } = require('../controllers/bookController');
 
 router.get('/books', async (req, res) => {
     const books = await Book.find();
@@ -67,6 +68,9 @@ router.post('/add', upload.single('image'), async (req, res) => {
     res.status(500).json({ error: 'Erro ao adicionar livro' });
   }
 });
+
+// Rota para atualizar os preços
+router.put('/update-prices', updateBookPrices);
 
 // Rota para atualizar informações de um livro
 router.put('/books/:id', async (req, res) => {
