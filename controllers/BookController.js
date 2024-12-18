@@ -35,3 +35,12 @@ const updateBookPrices = async (req, res) => {
   }
 };
 
+// Buscar todos os livros
+exports.getAllBooks = async (req, res) => {
+  try {
+    const books = await Book.find(); // Obtém todos os livros
+    res.status(200).json(books); // Retorna os livros para o front-end
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar livros', error });
+  }
+};
