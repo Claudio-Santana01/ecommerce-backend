@@ -1,21 +1,48 @@
 const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
-const { updateBookPrices } = require('../controllers/bookController');
+const { updateBookPrices } = require('../controllers/BookController');
 
-router.get('/books', async (req, res) => {
-    const books = await Book.find();
-    res.json(books);
-  });
-  /*Crie um componente BookList que faz uma requisição para a 
+// Rota para listar todos os livros
+router.get('/', (req, res) => {
+  // Usando o modelo Book para buscar todos os livros no banco de dados
+  Book.find()
+    .then((books) => {
+      res.status(200).json(books);
+    })
+    .catch((error) => {
+      res.status(500).json({ message: 'Erro ao listar livros', error });
+    });
+});
+
+router.post('/favorite', (req, res) => {
+  const { bookId, userId } = req.body;
+  // Verificar se o livro existe
+  Book.findById(bookId)
+    .then((book) => {
+      if (!book) {
+        return res.status(404).json({ message: 'Livro não encontrado' });
+      }
+      // Adicionar o usuário aos favoritos do livro
+      book.favorites.push(userId);
+      return book.save();
+    })
+    .then((updatedBook) => {
+      res.status(200).json({ message: 'Livro favoritado com sucesso!', book: updatedBook });
+    })
+    .catch((error) => {
+      res.status(500).json({ message: 'Erro ao favoritar livro', error });
+    });
+});  
+/*Crie um componente BookList que faz uma requisição para a 
   rota /books e exibe os livros na tela.*/
 
  // Adicionar um novo livro
 router.post('/add', async (req, res) => {
-  const { title, author, description, publishedYear, genre, user } = req.body;
+  const { title, author, description, publishedYear, genre, user, publisher, price } = req.body;
 
   try {
-    const newBook = new Book({ title, author, description, publishedYear, genre, user });
+    const newBook = new Book({ title, author, description, publishedYear, genre, user, publisher, price });
     await newBook.save();
     res.json({ message: 'Livro adicionado com sucesso!', data: newBook });
   } catch (error) {
@@ -23,12 +50,7 @@ router.post('/add', async (req, res) => {
     res.status(500).json({ error: 'Erro ao adicionar livro' });
   }
 });
-  /*Frontend (React)
-Crie um formulário para o usuário preencher com o título, autor, descrição, preço 
-e imagem do livro.
-Quando o formulário for enviado, faça uma requisição POST para a rota /add com os 
-dados do livro. */
-
+  
 //Suporte para upload de arquivos
 const multer = require('multer');
 
@@ -44,15 +66,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Rota para listar todos os livros
-router.get('/books', async (req, res) => {
-  try {
-    const books = await Book.find();
-    res.status(200).json(books);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao listar livros', error });
-  }
-});
 
 // Rota para adicionar um novo livro com imagem
 router.post('/add', upload.single('image'), async (req, res) => {
@@ -70,7 +83,7 @@ router.post('/add', upload.single('image'), async (req, res) => {
 });
 
 // Rota para atualizar os preços
-router.put('/update-prices', updateBookPrices);
+// router.put('/update-prices', updateBookPrices);
 
 // Rota para atualizar informações de um livro
 router.put('/books/:id', async (req, res) => {

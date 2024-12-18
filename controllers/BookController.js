@@ -2,9 +2,9 @@ const Book = require('../models/Book');
 
 // Adicionar livro
 exports.createBook = async (req, res) => {
-  const { title, author, price, imageUrl, description, createdBy } = req.body;
+  const { title, author, price, imageUrl, description, createdBy, publishedYear, publisher } = req.body;
   try {
-    const newBook = new Book({ title, author, price, imageUrl, description, createdBy });
+    const newBook = new Book({ title, author, price, imageUrl, description, createdBy, publishedYear, publisher });
     await newBook.save();
     res.status(201).json({ message: 'Livro adicionado com sucesso', book: newBook });
   } catch (error) {

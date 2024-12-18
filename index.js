@@ -1,7 +1,6 @@
 require('dotenv').config(); // Para carregar as variáveis de ambiente
 const express = require('express');
 const connectDB = require('./db'); // Importando a conexão ao banco de dados
-const bookRoutes = require('./routes/bookRoutes');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -15,7 +14,7 @@ connectDB();
 app.use('/api/users', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/books', require('./routes/books'));
-app.use('/api/books', bookRoutes);
+
 
 // Inicializar o servidor do projeto
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
