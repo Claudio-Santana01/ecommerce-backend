@@ -6,6 +6,7 @@ const connectDB = require('./database/database');
 const userRoutes = require('./routes/users'); // Importar as rotas de usuários
 const authRoutes = require('./routes/auth'); // Importar as rotas de autenticação
 const booksRoutes = require('./routes/books'); // Importando rotas de livros
+const router = require('./routes'); // Importa suas rotas
 
 const app = express();
 
@@ -23,6 +24,7 @@ connectDB();
 app.use('/api/users', userRoutes);  // Rota para usuários
 app.use('/api/auth', authRoutes);  // Rota para autenticação (login)
 app.use('/api/books', booksRoutes); // Rota para livros
+app.use('/api/user/favoritos', router);
 
 // Rota inicial para teste
 app.get('/', (req, res) => {

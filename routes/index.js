@@ -11,9 +11,9 @@ app.use(express.json());
 connectDB();
 
 // Rotas (importar suas rotas aqui)
-app.use('/api/users', require('./routes/users'));
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/books', require('./routes/books'));
+app.use('/api/users', require('./users'));
+app.use('/api/auth', require('./auth'));
+app.use('/api/books', require('./books'));
 
 
 // Inicializar o servidor do projeto
