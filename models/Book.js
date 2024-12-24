@@ -7,7 +7,7 @@ const bookSchema = new mongoose.Schema({
   publishedYear: { type: Number },
   genre: { type: String },
   user: { type: String },
-  image: { type: String },
+  imageUrl: { type: String },
   publisher: { type: String, required: true }, // Campo "Editora"
   views: { type: Number, default: 0 }, // Campo para contagem de visualizações
   favorites: [String], // Lista de usuários que favoritaram o livro

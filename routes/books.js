@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer'); // Importar o multer
+const path = require('path');
 const Book = require('../models/Book');
-const { updateBookPrices } = require('../controllers/BookController');
+
+
+// const { updateBookPrices } = require('../controllers/BookController');
 
 // Rota para listar todos os livros
 router.get('/', (req, res) => {
   // Usando o modelo Book para buscar todos os livros no banco de dados
-  Book.find()
+  Book.find() 
     .then((books) => {
       res.status(200).json(books);
     })
@@ -34,53 +38,48 @@ router.post('/favorite', (req, res) => {
       res.status(500).json({ message: 'Erro ao favoritar livro', error });
     });
 });  
-/*Crie um componente BookList que faz uma requisição para a 
-  rota /books e exibe os livros na tela.*/
 
- // Adicionar um novo livro
-router.post('/add', async (req, res) => {
-  const { title, author, description, publishedYear, genre, user, publisher, price } = req.body;
 
-  try {
-    const newBook = new Book({ title, author, description, publishedYear, genre, user, publisher, price });
-    await newBook.save();
-    res.json({ message: 'Livro adicionado com sucesso!', data: newBook });
-  } catch (error) {
-    console.error('Erro ao adicionar livro:', error);
-    res.status(500).json({ error: 'Erro ao adicionar livro' });
-  }
-});
-  
-//Suporte para upload de arquivos
-const multer = require('multer');
-
-// Configuração do armazenamento para o upload de imagens
+// Configuração do armazenamento para upload de imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Pasta onde as imagens serão salvas
+    const uploadPath = path.join(__dirname, '../uploads');
+    cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Nome do arquivo
+    cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
 
 const upload = multer({ storage });
 
-
-// Rota para adicionar um novo livro com imagem
+// Rota para adicionar um novo livro com upload de imagem
 router.post('/add', upload.single('image'), async (req, res) => {
-  const { title, author, description, publishedYear, genre, user, publisher, price } = req.body;
-  const image = req.file ? req.file.path : null;
+  const { title, author, publisher, publishedYear, genre, price, description } = req.body;
 
   try {
-    const newBook = new Book({ title, author, description, publishedYear, genre, user, image, publisher, price });
+    console.log('Body recebido:', req.body);
+    console.log('Arquivo recebido:', req.file);
+
+    const newBook = new Book({
+      title,
+      author,
+      publisher,
+      publishedYear,
+      genre,
+      price,
+      description,
+      imageUrl: req.file ? `/uploads/${req.file.filename}` : '', // Salva o caminho da imagem
+    });
+
     await newBook.save();
-    res.json({ message: 'Livro adicionado com sucesso!', data: newBook });
+    res.status(201).json(newBook);
   } catch (error) {
     console.error('Erro ao adicionar livro:', error);
-    res.status(500).json({ error: 'Erro ao adicionar livro' });
+    res.status(500).json({ message: 'Erro ao adicionar livro', error });
   }
 });
+
 
 // Rota para atualizar os preços
 // router.put('/update-prices', updateBookPrices);
