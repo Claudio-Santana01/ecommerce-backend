@@ -1,5 +1,6 @@
 const express = require('express');
 const User = require('../models/User');
+const Book = require('../models/Book');
 const { authMiddleware } = require('./auth'); // Importando middleware de autenticação
 
 const router = express.Router();
@@ -10,24 +11,35 @@ router.post('/favorite', authMiddleware, async (req, res) => {
   const userId = req.user; // Obtendo o userId do middleware
   
   try {
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+    const user = await User.findById(userId).populate('favorites'); // Certifique-se de que `favorites` está configurado como uma referência no modelo de usuário
+    if (!user) return res.status(404).json({ message: 'Usuário não encontrado' });
 
-    // Adicionar ou remover dos favoritos
-    if (user?.favorites?.includes(bookId)) {
-      user.favorites = user.favorites.filter((id) => id.toString() !== bookId);
-      await user.save();
-      return res.json({ message: 'Livro removido dos favoritos', favorites: user.favorites });
-    }
+    // Buscando detalhes completos dos livros favoritos
+    const favoriteBooks = await Book.find({ _id: { $in: user.favorites } });
 
-    user?.favorites?.push(bookId);
-    await user.save();
-    res.json({ message: 'Livro adicionado aos favoritos', favorites: user.favorites });
+    res.json(favoriteBooks); // Retorna os livros favoritos completos
   } catch (error) {
-    console.error('Erro ao favoritar livro:', error);
-    res.status(500).json({ error: 'Erro ao favoritar livro' });
+    console.error('Erro ao buscar favoritos:', error);
+    res.status(500).json({ message: 'Erro ao buscar favoritos', error });
   }
 });
+
+//Para exibir livros favoritos
+router.get('/favorite', authMiddleware, async (req, res) => {
+  const userId = req.user;
+
+  try {
+    const user = await User.findById(userId).populate('favorites'); // Certifique-se de que favorites é uma referência
+    if (!user) return res.status(404).json({ message: 'Usuário não encontrado' });
+
+    const favoriteBooks = await Book.find({ _id: { $in: user.favorites } }); // Busca detalhes completos
+    res.json(favoriteBooks); // Retorna os livros favoritos
+  } catch (error) {
+    console.error('Erro ao buscar favoritos:', error);
+    res.status(500).json({ message: 'Erro ao buscar favoritos', error });
+  }
+});
+
 
 //Buscar livros por título ou autor
 router.get('/books/search', async (req, res) => {

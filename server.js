@@ -25,11 +25,6 @@ app.use('/api/users', userRoutes);  // Rota para usuários
 app.use('/api/auth', authRoutes);  // Rota para autenticação (login)
 app.use('/api/books', booksRoutes); // Rota para livros
 
-app.use(cors({
-  origin: 'http://localhost:8080', // Altere conforme necessário
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'x-auth-token'],
-}));
 
 // Rota inicial para teste
 app.get('/', (req, res) => {
