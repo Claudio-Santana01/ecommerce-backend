@@ -6,8 +6,9 @@ const router = express.Router();
 
 // Favoritar um livro
 router.post('/favorite', authMiddleware, async (req, res) => {
-  const { userId, bookId } = req.body;
-
+  const { bookId } = req.body; // Recebendo apenas o bookId
+  const userId = req.user; // Obtendo o userId do middleware
+  
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
