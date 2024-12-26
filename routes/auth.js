@@ -7,20 +7,25 @@ const User = require('../models/User'); // Modelo de Usuário
 const router = express.Router();
 
 // Middleware de autenticação
-const auth = (req, res, next) => {
-  const token = req.header('x-auth-token');
-  if (!token) {
-    return res.status(401).json({ message: 'Token não encontrado, autorização negada' });
-  }
-
+const authMiddleware = async (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, 'secreta');
-    req.user = decoded.userId;
+    const token = req.header('x-auth-token');
+    if (!token) {
+      return res.status(401).json({ message: 'Acesso negado. Token não fornecido.' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.userId; // Ajuste conforme o seu token
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token inválido' });
+    res.status(401).json({ message: 'Token inválido.' });
   }
 };
+
+// Testando o Middleware
+router.get('/test-auth', authMiddleware, (req, res) => {
+  res.json({ message: 'Middleware funcionando!', user: req.user });
+});
 
 // Rota de Registro
 router.post(
@@ -87,7 +92,7 @@ router.post(
       }
 
       // Gerar o token JWT
-      const token = jwt.sign({ userId: user._id }, 'secreta', { expiresIn: '1h' });
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
       res.json({ message: 'Login bem-sucedido!', token });
     } catch (error) {
@@ -97,7 +102,4 @@ router.post(
   }
 );
 
-
-module.exports = router;
-module.exports.authMiddleware = auth;
-
+module.exports = { authMiddleware, router };

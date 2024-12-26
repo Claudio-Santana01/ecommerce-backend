@@ -2,9 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config(); // Carregar variáveis de ambiente do arquivo .env
 const connectDB = require('./database/database');
 const userRoutes = require('./routes/users');
-const authRoutes = require('./routes/auth');
+const { router: authRoutes } = require('./routes/auth'); // Importando o router de auth.js
 const booksRoutes = require('./routes/books');
 
 const app = express();
@@ -27,7 +28,7 @@ connectDB();
 
 // Usar as Rotas
 app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // Certifique-se de que auth.js exporta o router corretamente
 app.use('/api/books', booksRoutes);
 
 // Rota Inicial para Teste
@@ -41,6 +42,7 @@ app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 
+// Conectar ao Banco de Dados MongoDB
 mongoose.connect('mongodb://localhost:27017/ecommerce', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Conectado ao banco de dados'))
   .catch((error) => console.error('Erro ao conectar ao banco de dados:', error));

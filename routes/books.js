@@ -1,79 +1,58 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer'); // Importar o multer
+const multer = require('multer');
 const path = require('path');
 const Book = require('../models/Book');
+const { authMiddleware } = require('./auth'); // Ajuste o caminho para o arquivo auth.js
 
-
-// const { updateBookPrices } = require('../controllers/BookController');
-
-// Rota para listar todos os livros
-router.get('/', (req, res) => {
-  // Usando o modelo Book para buscar todos os livros no banco de dados
-  Book.find() 
-    .then((books) => {
-      res.status(200).json(books);
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Erro ao listar livros', error });
-    });
-});
-
-router.post('/favorite', (req, res) => {
-  const { bookId, userId } = req.body;
-  // Verificar se o livro existe
-  Book.findById(bookId)
-    .then((book) => {
-      if (!book) {
-        return res.status(404).json({ message: 'Livro não encontrado' });
-      }
-      // Adicionar o usuário aos favoritos do livro
-      book.favorites.push(userId);
-      return book.save();
-    })
-    .then((updatedBook) => {
-      res.status(200).json({ message: 'Livro favoritado com sucesso!', book: updatedBook });
-    })
-    .catch((error) => {
-      res.status(500).json({ message: 'Erro ao favoritar livro', error });
-    });
-});  
-
+console.log('authMiddleware:', typeof authMiddleware); // Deve retornar 'function'
 
 // Configuração do armazenamento para upload de imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads');
-    cb(null, uploadPath);
+    cb(null, 'uploads/'); // Pasta onde as imagens serão salvas
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    cb(null, `${Date.now()}-${file.originalname}`); // Nome do arquivo com timestamp
   },
 });
 
 const upload = multer({ storage });
 
-// Rota para adicionar um novo livro com upload de imagem
-router.post('/add', upload.single('image'), async (req, res) => {
-  const { title, author, publisher, publishedYear, genre, price, description } = req.body;
+// Rota para listar todos os livros
+router.get('/', async (req, res) => {
+  try {
+    const books = await Book.find();
+    res.status(200).json(books);
+  } catch (error) {
+    console.error('Erro ao listar livros:', error);
+    res.status(500).json({ message: 'Erro ao listar livros', error });
+  }
+});
+
+// Rota para adicionar um novo livro com ou sem imagem
+router.post('/add', authMiddleware, upload.single('image'), async (req, res) => {
+  const { title, author, description, publishedYear, genre, publisher, price } = req.body;
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
   try {
-    console.log('Body recebido:', req.body);
-    console.log('Arquivo recebido:', req.file);
+    // O ID do usuário autenticado será adicionado automaticamente pelo authMiddleware
+    const userId = req.user;
 
     const newBook = new Book({
       title,
       author,
-      publisher,
+      description,
       publishedYear,
       genre,
+      user: userId, // Adiciona o ID do usuário autenticado ao registro do livro
+      publisher,
       price,
-      description,
-      imageUrl: req.file ? `/uploads/${req.file.filename}` : '', // Salva o caminho da imagem
+      imageUrl,
     });
 
     await newBook.save();
-    res.status(201).json(newBook);
+    res.status(201).json({ message: 'Livro adicionado com sucesso!', data: newBook });
   } catch (error) {
     console.error('Erro ao adicionar livro:', error);
     res.status(500).json({ message: 'Erro ao adicionar livro', error });
@@ -81,23 +60,51 @@ router.post('/add', upload.single('image'), async (req, res) => {
 });
 
 
-// Rota para atualizar os preços
-// router.put('/update-prices', updateBookPrices);
 
-// Rota para atualizar informações de um livro
-router.put('/books/:id', async (req, res) => {
+// Rota para buscar um livro e incrementar visualizações
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  const { title, author, description, publishedYear, genre, user, image, publisher, price } = req.body;
-
-  console.log('ID do livro:', id);
-  console.log('Dados para atualização:', { title, author, description, publishedYear, genre, user, image, publisher, price });
-
 
   try {
-    // Encontrar o livro pelo ID e atualizar os campos fornecidos
+    const book = await Book.findById(id);
+    if (!book) return res.status(404).json({ message: 'Livro não encontrado' });
+
+    book.views += 1;
+    await book.save();
+    res.status(200).json(book);
+  } catch (error) {
+    console.error('Erro ao buscar livro:', error);
+    res.status(500).json({ message: 'Erro ao buscar livro', error });
+  }
+});
+
+// Rota para listar os livros mais visualizados
+router.get('/most-searched', async (req, res) => {
+  try {
+    const mostSearchedBooks = await Book.find()
+      .sort({ views: -1 })
+      .limit(5); // Limita a 5 livros mais visualizados
+
+    if (!mostSearchedBooks || mostSearchedBooks.length === 0) {
+      return res.status(404).json({ message: 'Nenhum livro encontrado' });
+    }
+
+    res.status(200).json(mostSearchedBooks);
+  } catch (error) {
+    console.error('Erro ao buscar livros mais visualizados:', error);
+    res.status(500).json({ message: 'Erro ao buscar livros mais visualizados', error });
+  }
+});
+
+// Rota para atualizar informações de um livro
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, author, description, publishedYear, genre, user, publisher, price, imageUrl } = req.body;
+
+  try {
     const updatedBook = await Book.findByIdAndUpdate(
       id,
-      { title, author, description, publishedYear, genre, user, image, publisher, price },
+      { title, author, description, publishedYear, genre, user, publisher, price, imageUrl },
       { new: true, runValidators: true } // Retorna o documento atualizado e valida os campos
     );
 
@@ -105,10 +112,10 @@ router.put('/books/:id', async (req, res) => {
       return res.status(404).json({ message: 'Livro não encontrado' });
     }
 
-    res.json({ message: 'Livro atualizado com sucesso', book: updatedBook });
+    res.status(200).json({ message: 'Livro atualizado com sucesso', data: updatedBook });
   } catch (error) {
     console.error('Erro ao atualizar o livro:', error);
-    res.status(500).json({ error: 'Erro no servidor ao atualizar o livro' });
+    res.status(500).json({ message: 'Erro ao atualizar o livro', error });
   }
 });
 
@@ -124,49 +131,11 @@ router.post('/favorite', async (req, res) => {
 
     book.favorites.push(userId);
     await book.save();
-    res.status(200).json({ message: 'Livro favoritado com sucesso!', book });
+    res.status(200).json({ message: 'Livro favoritado com sucesso!', data: book });
   } catch (error) {
+    console.error('Erro ao favoritar livro:', error);
     res.status(500).json({ message: 'Erro ao favoritar livro', error });
   }
 });
 
-// Rota para listar os livros mais visualizados
-router.get('/most-searched', async (req, res) => {
-  try {
-    // Verificando se existe algum livro
-    const books = await Book.find();
-    if (!books || books.length === 0) {
-      return res.status(404).json({ error: "Nenhum livro encontrado" });
-    }
-
-    // Ordenando os livros pelas visualizações de forma decrescente
-    const mostSearchedBooks = await Book.find()
-      .sort({ views: -1 })
-      .limit(5); // Limita a 5 livros mais visualizados
-    
-    res.status(200).json(mostSearchedBooks);
-  } catch (err) {
-    console.error('Erro ao buscar livro mais pesquisado:', err);
-    res.status(500).json({ error: "Erro ao buscar livros mais pesquisados" });
-  }
-});
-
-// Rota para buscar um livro e incrementar visualizações
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const book = await Book.findById(id);
-    if (!book) return res.status(404).json({ error: 'Livro não encontrado' });
-
-    book.views += 1;
-    await book.save();
-    res.json(book);
-  } catch (error) {
-    console.error('Erro ao buscar livro:', error);
-    res.status(500).json({ error: 'Erro ao buscar livro' });
-  }
-});
-
-
-module.exports = router; // Exportar as rotas
+module.exports = router;

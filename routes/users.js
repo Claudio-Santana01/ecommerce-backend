@@ -61,6 +61,55 @@ router.get('/favorites', authMiddleware, async (req, res) => {
   }
 });
 
+// Rota para buscar dados de contato do anunciante e informações do livro
+router.get('/contact/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params; // Certifique-se de que o parâmetro está correto
+
+  console.log('ID recebido na rota:', id); // Log para identificar o ID recebido
+
+  try {
+    // Buscar o livro pelo ID
+    const book = await Book.findById(id);
+    if (!book) {
+      console.log('Livro não encontrado:', id);
+      return res.status(404).json({ message: 'Livro não encontrado' });
+    }
+
+    console.log('Livro encontrado:', book); // Log do livro encontrado
+
+    // Buscar o usuário pelo campo relacionado ao livro
+    const user = await User.findById(book.user); // Verifique se o campo `book.user` contém o ID correto
+    if (!user) {
+      console.log('Usuário anunciante não encontrado para o livro:', id);
+      return res.status(404).json({ message: 'Usuário anunciante não encontrado' });
+    }
+
+    console.log('Usuário encontrado:', user); // Log do usuário encontrado
+
+    // Retornar os detalhes do livro e do anunciante
+    res.status(200).json({
+      book: {
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        publisher: book.publisher,
+        price: book.price,
+        description: book.description,
+        imageUrl: book.imageUrl, // Inclui a imagem, se disponível
+      },
+      contact: {
+        nickname: user.name, // Considerando o nome como apelido
+        fullName: user.name, // Ajuste o campo conforme necessário
+        email: user.email,
+        phone: user.phone || 'Telefone não informado', // Caso o telefone não esteja disponível
+      },
+    });
+  } catch (error) {
+    console.error('Erro ao buscar dados de contato do anunciante:', error);
+    res.status(500).json({ message: 'Erro ao buscar dados de contato', error });
+  }
+});
+
 // Buscar livros por título ou autor
 router.get('/books/search', async (req, res) => {
   const { query } = req.query;

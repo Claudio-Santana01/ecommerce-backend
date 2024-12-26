@@ -6,21 +6,12 @@ const bookSchema = new mongoose.Schema({
   description: { type: String },
   publishedYear: { type: Number },
   genre: { type: String },
-  user: { type: String },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Referência para o modelo User
   imageUrl: { type: String },
-  publisher: { type: String, required: true }, // Campo "Editora"
-  views: { type: Number, default: 0 }, // Campo para contagem de visualizações
-  favorites: [String], // Lista de usuários que favoritaram o livro
-  price: { type: Number, required: true, min: 0, validate: {
-    validator: Number.isFinite,
-    message: 'Preço deve ser um número válido',
-  }}, // Campo para preço
+  publisher: { type: String, required: true },
+  views: { type: Number, default: 0 },
+  favorites: [String], // Lista de IDs de usuários que favoritaram o livro
+  price: { type: Number, required: true, min: 0 },
 });
 
-const Book = mongoose.model('Book', bookSchema);
-
-module.exports = Book;
-
-
-
-
+module.exports = mongoose.model('Book', bookSchema);
