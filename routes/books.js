@@ -61,7 +61,26 @@ router.post('/add', authMiddleware, upload.single('image'), async (req, res) => 
 
 
 
-// Rota para buscar um livro e incrementar visualizações
+// Rota para listar os livros mais visualizados - DEVE VIR ANTES da rota /:id
+router.get('/most-searched', async (req, res) => {
+  try {
+    // Busca os livros mais visualizados e ordena por 'views'
+    const mostSearchedBooks = await Book.find({})
+      .sort({ views: -1 })
+      .limit(10); // Limita a 10 livros mais visualizados
+
+    if (!mostSearchedBooks || mostSearchedBooks.length === 0) {
+      return res.status(404).json({ message: 'Nenhum livro encontrado' });
+    }
+
+    res.status(200).json(mostSearchedBooks);
+  } catch (error) {
+    console.error('Erro ao buscar livros mais visualizados:', error);
+    res.status(500).json({ message: 'Erro ao buscar livros mais visualizados', error });
+  }
+});
+
+// Rota para buscar um livro e incrementar visualizações - DEVE VIR APÓS /most-searched
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -78,23 +97,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Rota para listar os livros mais visualizados
-router.get('/most-searched', async (req, res) => {
-  try {
-    const mostSearchedBooks = await Book.find()
-      .sort({ views: -1 })
-      .limit(5); // Limita a 5 livros mais visualizados
-
-    if (!mostSearchedBooks || mostSearchedBooks.length === 0) {
-      return res.status(404).json({ message: 'Nenhum livro encontrado' });
-    }
-
-    res.status(200).json(mostSearchedBooks);
-  } catch (error) {
-    console.error('Erro ao buscar livros mais visualizados:', error);
-    res.status(500).json({ message: 'Erro ao buscar livros mais visualizados', error });
-  }
-});
 
 // Rota para atualizar informações de um livro
 router.put('/:id', async (req, res) => {

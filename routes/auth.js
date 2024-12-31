@@ -15,12 +15,15 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.userId; // Ajuste conforme o seu token
+    req.user = decoded.userId; // Garante que o userId é anexado corretamente
+    console.log('Usuário autenticado:', req.user); // Log do usuário autenticado
     next();
   } catch (error) {
+    console.error('Erro na autenticação:', error);
     res.status(401).json({ message: 'Token inválido.' });
   }
 };
+
 
 // Testando o Middleware
 router.get('/test-auth', authMiddleware, (req, res) => {
