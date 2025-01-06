@@ -24,7 +24,6 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-
 // Testando o Middleware
 router.get('/test-auth', authMiddleware, (req, res) => {
   res.json({ message: 'Middleware funcionando!', user: req.user });
@@ -58,7 +57,7 @@ router.post(
       const newUser = new User({ name, email, password: hashedPassword });
       await newUser.save();
 
-      res.json({ message: 'Usuário registrado com sucesso!', data: newUser });
+      res.json({ message: 'Usuário registrado com sucesso!', userId: newUser._id });
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       res.status(500).json({ error: 'Erro ao registrar usuário' });
@@ -97,7 +96,8 @@ router.post(
       // Gerar o token JWT
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-      res.json({ message: 'Login bem-sucedido!', token });
+      // Inclua o userId na resposta
+      res.json({ message: 'Login bem-sucedido!', token, userId: user._id });
     } catch (error) {
       console.error('Erro no login:', error);
       res.status(500).json({ error: 'Erro no servidor' });
