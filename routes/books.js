@@ -5,8 +5,6 @@ const path = require('path');
 const Book = require('../models/Book');
 const { authMiddleware } = require('./auth'); // Ajuste o caminho para o arquivo auth.js
 
-console.log('authMiddleware:', typeof authMiddleware); // Deve retornar 'function'
-
 // Configuração do armazenamento para upload de imagens
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -36,8 +34,7 @@ router.post('/add', authMiddleware, upload.single('image'), async (req, res) => 
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
   try {
-    // O ID do usuário autenticado será adicionado automaticamente pelo authMiddleware
-    const userId = req.user;
+    const userId = req.user; // Obtém o ID do usuário autenticado do middleware
 
     const newBook = new Book({
       title,
@@ -45,7 +42,7 @@ router.post('/add', authMiddleware, upload.single('image'), async (req, res) => 
       description,
       publishedYear,
       genre,
-      user: userId, // Adiciona o ID do usuário autenticado ao registro do livro
+      user: userId,
       publisher,
       price,
       imageUrl,
@@ -59,15 +56,29 @@ router.post('/add', authMiddleware, upload.single('image'), async (req, res) => 
   }
 });
 
+// Rota para buscar anúncios de um usuário específico
+router.get('/my-ads', async (req, res) => {
+  const { userId } = req.query;
 
+  try {
+    if (!userId) {
+      return res.status(400).json({ error: 'ID de usuário não fornecido' });
+    }
 
-// Rota para listar os livros mais visualizados - DEVE VIR ANTES da rota /:id
+    const books = await Book.find({ user: userId });
+    res.status(200).json(books);
+  } catch (error) {
+    console.error('Erro ao buscar anúncios:', error);
+    res.status(500).json({ error: 'Erro ao buscar anúncios' });
+  }
+});
+
+// Rota para buscar os livros mais visualizados
 router.get('/most-searched', async (req, res) => {
   try {
-    // Busca os livros mais visualizados e ordena por 'views'
     const mostSearchedBooks = await Book.find({})
       .sort({ views: -1 })
-      .limit(10); // Limita a 10 livros mais visualizados
+      .limit(10);
 
     if (!mostSearchedBooks || mostSearchedBooks.length === 0) {
       return res.status(404).json({ message: 'Nenhum livro encontrado' });
@@ -80,29 +91,7 @@ router.get('/most-searched', async (req, res) => {
   }
 });
 
-// Rota para buscar os anúncios de um usuário específico
-router.get('/my-ads', async (req, res) => {
-  const { userId } = req.query; // Captura o ID do usuário dos parâmetros da requisição
-
-  try {
-      // Valida se o userId foi fornecido
-      if (!userId) {
-          return res.status(400).json({ error: 'ID de usuário não fornecido' });
-      }
-
-      // Busca todos os livros relacionados ao usuário
-      const books = await Book.find({ user: userId }); // Filtra pelo campo 'user' no modelo Book
-      res.status(200).json(books);
-  } catch (error) {
-      console.error('Erro ao buscar anúncios:', error);
-      res.status(500).json({ error: 'Erro ao buscar anúncios' });
-  }
-});
-
-
-
-
-// Rota para buscar um livro e incrementar visualizações - DEVE VIR APÓS /most-searched
+// Rota para buscar um livro e incrementar visualizações
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -119,24 +108,36 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-
 // Rota para atualizar informações de um livro
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
   const { id } = req.params;
-  const { title, author, description, publishedYear, genre, user, publisher, price, imageUrl } = req.body;
+  const { title, author, description, publishedYear, genre, publisher, price } = req.body;
 
   try {
-    const updatedBook = await Book.findByIdAndUpdate(
-      id,
-      { title, author, description, publishedYear, genre, user, publisher, price, imageUrl },
-      { new: true, runValidators: true } // Retorna o documento atualizado e valida os campos
-    );
+    const updateData = {
+      title,
+      author,
+      description,
+      publishedYear,
+      genre,
+      publisher,
+      price,
+    };
+
+    if (req.file) {
+      updateData.imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedBook = await Book.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedBook) {
       return res.status(404).json({ message: 'Livro não encontrado' });
     }
 
-    res.status(200).json({ message: 'Livro atualizado com sucesso', data: updatedBook });
+    res.status(200).json({ message: 'Livro atualizado com sucesso!', data: updatedBook });
   } catch (error) {
     console.error('Erro ao atualizar o livro:', error);
     res.status(500).json({ message: 'Erro ao atualizar o livro', error });
