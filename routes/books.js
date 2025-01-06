@@ -80,6 +80,28 @@ router.get('/most-searched', async (req, res) => {
   }
 });
 
+// Rota para buscar os anúncios de um usuário específico
+router.get('/my-ads', async (req, res) => {
+  const { userId } = req.query; // Captura o ID do usuário dos parâmetros da requisição
+
+  try {
+      // Valida se o userId foi fornecido
+      if (!userId) {
+          return res.status(400).json({ error: 'ID de usuário não fornecido' });
+      }
+
+      // Busca todos os livros relacionados ao usuário
+      const books = await Book.find({ user: userId }); // Filtra pelo campo 'user' no modelo Book
+      res.status(200).json(books);
+  } catch (error) {
+      console.error('Erro ao buscar anúncios:', error);
+      res.status(500).json({ error: 'Erro ao buscar anúncios' });
+  }
+});
+
+
+
+
 // Rota para buscar um livro e incrementar visualizações - DEVE VIR APÓS /most-searched
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
