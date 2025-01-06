@@ -119,7 +119,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
       author,
       description,
       publishedYear,
-      genre,
+      genre,  
       publisher,
       price,
     };
