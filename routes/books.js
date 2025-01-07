@@ -76,9 +76,9 @@ router.get('/my-ads', async (req, res) => {
 // Rota para buscar os livros mais visualizados
 router.get('/most-searched', async (req, res) => {
   try {
-    const mostSearchedBooks = await Book.find({})
-      .sort({ views: -1 })
-      .limit(10);
+    const mostSearchedBooks = await Book.find({ views: { $gt: 0 } }) // Filtra livros com views > 0
+      .sort({ views: -1 }) // Ordena em ordem decrescente por views
+      .limit(10); // Limita o resultado a 10 livros
 
     if (!mostSearchedBooks || mostSearchedBooks.length === 0) {
       return res.status(404).json({ message: 'Nenhum livro encontrado' });
@@ -95,7 +95,7 @@ router.get('/most-searched', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
-  try {
+  try {ss
     const book = await Book.findById(id);
     if (!book) return res.status(404).json({ message: 'Livro não encontrado' });
 
@@ -144,6 +144,24 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
   }
 });
 
+// Rota para excluir um livro
+router.delete('/:id', async (req, res) => {
+  console.log('ID recebido para exclusão:', req.params.id);
+  const { id } = req.params;
+
+  try {
+      const deletedBook = await Book.findByIdAndDelete(id);
+      if (!deletedBook) {
+          return res.status(404).json({ message: 'Livro não encontrado' });
+      }
+      res.status(200).json({ message: 'Livro excluído com sucesso' });
+  } catch (error) {
+      console.error('Erro ao excluir livro:', error);
+      res.status(500).json({ message: 'Erro ao excluir livro', error });
+  }
+});
+
+
 // Rota para marcar um livro como favorito
 router.post('/favorite', async (req, res) => {
   const { bookId, userId } = req.body;
@@ -162,5 +180,7 @@ router.post('/favorite', async (req, res) => {
     res.status(500).json({ message: 'Erro ao favoritar livro', error });
   }
 });
+
+
 
 module.exports = router;
