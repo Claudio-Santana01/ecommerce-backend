@@ -36,6 +36,9 @@ router.post(
     check('name', 'O nome é obrigatório').not().isEmpty(),
     check('email', 'Adicione um email válido').isEmail(),
     check('password', 'A senha deve ter no mínimo 6 caracteres').isLength({ min: 6 }),
+    check('phone', 'Adicione um número de telefone válido').not().isEmpty(),
+    check('address', 'Adicione um endereço válido').not().isEmpty(),
+    check('nickname', 'Adicione um apelido válido').not().isEmpty(),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -43,7 +46,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, address, nickname } = req.body;
 
     try {
       const existingUser = await User.findOne({ email });
@@ -54,10 +57,17 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      const newUser = new User({ name, email, password: hashedPassword });
-      await newUser.save();
+      const newUser = new User({
+        name,
+        email,
+        password: hashedPassword,
+        phone,
+        address,
+        nickname,
+      });
 
-      res.json({ message: 'Usuário registrado com sucesso!', userId: newUser._id });
+      await newUser.save();
+      res.status(201).json({ message: 'Usuário registrado com sucesso!', userId: newUser._id });
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       res.status(500).json({ error: 'Erro ao registrar usuário' });

@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-  phone: String, // Novo campo para telefone
-  address: String, // Novo campo para endereço
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: { type: String, required: true }, // Adicionando campo phone
+  address: { type: String, required: true }, // Adicionando campo address
+  nickname: { type: String, required: true }, // Adicionando campo nickname
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
 });
 
