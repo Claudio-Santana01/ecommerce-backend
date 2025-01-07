@@ -61,6 +61,32 @@ router.get('/favorites', authMiddleware, async (req, res) => {
   }
 });
 
+// Rota para remover um livro dos favoritos
+router.post('/unfavorite', authMiddleware, async (req, res) => {
+  const { bookId } = req.body;
+
+  try {
+    const user = await User.findById(req.user); // `req.user` é adicionado pelo `authMiddleware`
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Remove o livro dos favoritos
+    user.favorites = user.favorites.filter((id) => id.toString() !== bookId);
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'Livro removido dos favoritos com sucesso!',
+      favorites: user.favorites,
+    });
+  } catch (error) {
+    console.error('Erro ao remover favorito:', error);
+    res.status(500).json({ message: 'Erro ao remover livro dos favoritos' });
+  }
+});
+
 // Rota para buscar dados de contato do anunciante e informações do livro
 router.get('/contact/:id', authMiddleware, async (req, res) => {
   const { id } = req.params; // Certifique-se de que o parâmetro está correto

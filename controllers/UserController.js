@@ -11,3 +11,4 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ message: 'Erro ao criar usuário', error });
   }
 };
+
