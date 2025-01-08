@@ -1,13 +1,18 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: { type: String, required: true }, // Adicionando campo phone
-  address: { type: String, required: true }, // Adicionando campo address
-  nickname: { type: String, required: true }, // Adicionando campo nickname
+  name: String,
+  email: String,
+  password: String,
+  phone: String,
+  isWhatsApp: Boolean, // Adicione este campo
+  address: String,
+  nickname: String,
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Book' }],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model('User', UserSchema);

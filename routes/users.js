@@ -124,9 +124,10 @@ router.get('/contact/:id', authMiddleware, async (req, res) => {
         imageUrl: book.imageUrl, // Inclui a imagem, se disponível
       },
       contact: {
-        nickname: user.name, // Considerando o nome como apelido
+        nickname: user.nickname, // Considerando o nome como apelido
         fullName: user.name, // Ajuste o campo conforme necessário
         email: user.email,
+        isWhatsApp: user.isWhatsApp,
         phone: user.phone || 'Telefone não informado', // Caso o telefone não esteja disponível
       },
     });

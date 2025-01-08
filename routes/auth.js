@@ -46,34 +46,44 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password, phone, address, nickname } = req.body;
+    const { name, email, password, phone, address, nickname, isWhatsApp } = req.body;
 
     try {
+      // Verifica se o e-mail já está registrado
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(400).json({ error: 'Usuário já registrado' });
       }
 
+      // Gera um hash para a senha
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      // Cria o novo usuário com o campo isWhatsApp
       const newUser = new User({
         name,
         email,
         password: hashedPassword,
         phone,
+        isWhatsApp, // Adiciona o campo isWhatsApp
         address,
         nickname,
       });
 
+      // Salva o usuário no banco de dados
       await newUser.save();
-      res.status(201).json({ message: 'Usuário registrado com sucesso!', userId: newUser._id });
+
+      res.status(201).json({
+        message: 'Usuário registrado com sucesso!',
+        userId: newUser._id,
+      });
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       res.status(500).json({ error: 'Erro ao registrar usuário' });
     }
   }
 );
+
 
 // Rota de Login
 router.post(
