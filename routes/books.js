@@ -28,6 +28,35 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Rota para buscar livros pelo título ou autor
+router.get('/search', async (req, res) => {
+  const { search } = req.query;
+
+  try {
+    if (!search) {
+      return res.status(400).json({ message: 'O parâmetro de busca é obrigatório.' });
+    }
+
+    // Procura livros pelo título ou autor que contenham a string de busca
+    const books = await Book.find({
+      $or: [
+        { title: { $regex: search, $options: 'i' } }, // Busca no título (case-insensitive)
+        { author: { $regex: search, $options: 'i' } }, // Busca no autor (case-insensitive)
+      ],
+    });
+
+    if (books.length === 0) {
+      return res.status(404).json({ message: 'Nenhum livro encontrado.' });
+    }
+
+    res.status(200).json(books);
+  } catch (error) {
+    console.error('Erro ao buscar livros:', error);
+    res.status(500).json({ message: 'Erro ao buscar livros.', error });
+  }
+});
+
+
 // Rota para adicionar um novo livro com ou sem imagem
 router.post('/add', authMiddleware, upload.single('image'), async (req, res) => {
   const { title, author, description, publishedYear, genre, publisher, price } = req.body;
