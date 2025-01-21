@@ -155,6 +155,26 @@ router.get('/books/search', async (req, res) => {
   }
 });
 
+//Encontrar um usuário
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  console.log('Recebendo requisição para buscar usuário:', id);
+  
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      console.error('Usuário não encontrado para o ID:', id);
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ message: 'Erro no servidor.' });
+  }
+});
+
+
+
 // Listar todos os usuários
 router.get('/', async (req, res) => {
   try {
