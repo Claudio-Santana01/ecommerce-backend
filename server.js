@@ -7,6 +7,7 @@ const connectDB = require('./database/database');
 const userRoutes = require('./routes/users');
 const { router: authRoutes } = require('./routes/auth'); // Importando o router de auth.js
 const booksRoutes = require('./routes/books');
+const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 
@@ -30,6 +31,7 @@ connectDB();
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes); // Certifique-se de que auth.js exporta o router corretamente
 app.use('/api/books', booksRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Rota Inicial para Teste
 app.get('/', (req, res) => {
