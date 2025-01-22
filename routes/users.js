@@ -189,20 +189,63 @@ router.get('/', async (req, res) => {
 // Editar usuário
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { name, email } = req.body;
+  const updateFields = req.body; // Aceita todos os campos enviados no corpo da requisição
 
   try {
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { name, email },
+      updateFields,
       { new: true }
     );
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
     res.status(200).json(updatedUser);
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
-    res.status(500).json({ message: 'Erro ao atualizar usuário', error });
+    res.status(500).json({ message: 'Erro ao atualizar usuário.', error });
   }
 });
+
+//Atualizar um Usuário
+router.put('/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { fullName, address, email, dob, phone, isWhatsApp, nickname } = req.body;
+
+  console.log('ID recebido:', id);
+  console.log('Dados recebidos:', req.body);
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        name: fullName,
+        address,
+        email,
+        dob,
+        phone,
+        isWhatsApp,
+        nickname,
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.log('Usuário não encontrado.');
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    console.log('Usuário atualizado com sucesso:', updatedUser);
+    res.status(200).json({ message: 'Usuário atualizado com sucesso', updatedUser });
+  } catch (error) {
+    console.error('Erro ao atualizar os dados:', err.response?.data || err.message);
+    setError(err.response?.data?.message || 'Erro ao atualizar os dados.');
+  }
+});
+
+
+
+
 
 // Deletar usuário
 router.delete('/:id', authMiddleware, async (req, res) => {
